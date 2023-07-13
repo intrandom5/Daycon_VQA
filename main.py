@@ -24,7 +24,7 @@ def main(config):
     optimizer = optim.AdamW(model.parameters(), lr=config["learning_rate"])
 
     for epoch in range(config["epochs"]):
-        train_loss, valid_loss = train(model, train_loader, optimizer, criterion, device)
+        train_loss, valid_loss = train(model, train_loader, valid_loader, optimizer, criterion, device)
         print(f"Epoch: {epoch+1}, Train Loss: {train_loss:.4f}, Valid Loss: {valid_loss:.4f}")
 
     test_loader, tokenizer = prepare_test_data(config["test_df"], config["test_img_path"])
