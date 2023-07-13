@@ -31,7 +31,7 @@ class VQADataset(Dataset):
         else:
             img_name = os.path.join(self.img_path, row['image_id'] + '.jpg') # 이미지
             image = Image.open(img_name).convert('RGB')
-            image = self.transform(image)
+            image = self.transforms(image)
 
         question = row['question'] # 질문
         question = self.tokenizer.encode_plus(
