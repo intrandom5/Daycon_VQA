@@ -10,8 +10,8 @@ class VQAModel(nn.Module):
         self.vocab_size = vocab_size
 
         self.resnet = models.resnet50(pretrained=True)
-        self.gpt2 = GPT2Model.from_pretrained('gpt2')
-        self.gpt2.resize_token_embeddings(vocab_size) # 추가한 [PAD] 토큰 반영
+        # self.gpt2 = GPT2Model.from_pretrained('gpt2')
+        # self.gpt2.resize_token_embeddings(vocab_size) # 추가한 [PAD] 토큰 반영
 
         combined_features_size = 1000 + self.gpt2.config.hidden_size # resnet 출력 차원 + gpt2 출력 차원
         self.classifier = nn.Linear(combined_features_size, vocab_size)

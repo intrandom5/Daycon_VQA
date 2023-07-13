@@ -1,4 +1,5 @@
 import torch
+import pickle
 import pandas as pd
 from tqdm.auto import tqdm
 
@@ -16,14 +17,11 @@ def prepare_training_data(train_df_path, valid_df_path, train_img_path):
     tokenizer.add_special_tokens({"pad_token": "[PAD]"})
     vocab_size = len(tokenizer)
 
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    with open(train_img_path, "rb") as f:
+        feat = pickle.load(f)
 
-    train_dataset = VQADataset(train_df, tokenizer, transform, train_img_path, is_test=False)
-    valid_dataset = VQADataset(valid_df, tokenizer, transform, train_img_path, is_test=False)
+    train_dataset = VQADataset(train_df, tokenizer, feat, is_test=False)
+    valid_dataset = VQADataset(valid_df, tokenizer, feat, is_test=False)
     train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
     valid_loader = DataLoader(valid_dataset, batch_size=64, shuffle=False)
 
@@ -34,6 +32,9 @@ def prepare_test_data(test_df_path, test_img_path):
 
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
     tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+
+    with open(test_img_path, "rb") as f:
+        feat = pickle.load(f)
     
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -41,7 +42,7 @@ def prepare_test_data(test_df_path, test_img_path):
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
-    test_dataset = VQADataset(test_df, tokenizer, transform, test_img_path, is_test=True)
+    test_dataset = VQADataset(test_df, tokenizer, feat, is_test=True)
     test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
     return test_loader, tokenizer
 
