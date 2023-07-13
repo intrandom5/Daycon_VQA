@@ -11,7 +11,7 @@ from model import VQAModel
 from utils import prepare_training_data, prepare_test_data, train, inference
 
 
-def main(config):
+def main(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     train_loader, valid_loader, vocab_size = prepare_training_data(
@@ -26,6 +26,8 @@ def main(config):
 
     if not os.path.exists(args.model_path):
         os.mkdir(args.model_path)
+
+    model.to(device)
 
     for epoch in range(args.epochs):
         train_loss, valid_loss, model_state = train(model, train_loader, valid_loader, optimizer, criterion, device)
