@@ -28,3 +28,4 @@ class VQAModel(nn.Module):
         combined = torch.cat([image_features, output_features], dim=-1) # [batch, sequence, 1000+hidden]
         output = self.classifier(combined) # [batch, vocab_size]
         return output
+    

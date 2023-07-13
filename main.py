@@ -1,3 +1,4 @@
+import os
 import yaml
 import argparse
 import pandas as pd
@@ -23,9 +24,13 @@ def main(config):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(), lr=config["learning_rate"])
 
+    if not os.path.exists(config["model_path"]):
+        os.mkdir(config["model_path"])
+
     for epoch in range(config["epochs"]):
-        train_loss, valid_loss = train(model, train_loader, valid_loader, optimizer, criterion, device)
+        train_loss, valid_loss, model_state = train(model, train_loader, valid_loader, optimizer, criterion, device)
         print(f"Epoch: {epoch+1}, Train Loss: {train_loss:.4f}, Valid Loss: {valid_loss:.4f}")
+        torch.save(model_state, os.path.join(config["model_path"], f"epoch{epoch+1}.pt"))
 
     test_loader, tokenizer = prepare_test_data(config["test_df"], config["test_img_path"])
     preds = inference(model, test_loader)

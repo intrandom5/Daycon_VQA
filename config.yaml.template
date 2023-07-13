@@ -2,8 +2,12 @@
 train_df: "path of train csv file"
 valid_df: "path of valid csv file"
 test_df: "path of test csv file"
+
 training_img_path: "paht of train image representation file in '.pkl'"
 test_img_path: "path of test image representation file in '.pkl'"
+
+# Setting save result.
+model_path: "path of model to save. it has to be folder name."
 
 # Setting Training.
 epochs: "number of epoch"

@@ -68,6 +68,7 @@ def train(model, train_loader, valid_loader, optimizer, criterion, device):
 
     train_loss = total_loss / len(train_loader)
 
+    model.eval()
     total_loss = 0
     for data in tqdm(valid_loader, total=len(valid_loader)):
         images = data['image'].to(device)
@@ -81,7 +82,7 @@ def train(model, train_loader, valid_loader, optimizer, criterion, device):
     
     valid_loss = total_loss / len(valid_loader)
 
-    return train_loss, valid_loss
+    return train_loss, valid_loss, model.state_dict()
 
 def inference(model, loader, device):
     model.eval()
