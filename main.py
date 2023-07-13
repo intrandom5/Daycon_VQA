@@ -31,7 +31,7 @@ def main(args):
     model.to(device)
     if args.logger == "wandb":
         run = wandb.init(
-            project="sentence_bert", 
+            project="DayCon_VQA", 
             entity="intrandom5", 
             name=args.log_name, 
             notes=args.log_note
