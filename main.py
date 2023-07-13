@@ -1,5 +1,6 @@
 import os
 import yaml
+import wandb
 import argparse
 import pandas as pd
 
@@ -28,10 +29,18 @@ def main(args):
         os.mkdir(args.model_path)
 
     model.to(device)
+    if args.logger == "wandb":
+        run = wandb.init(
+            project="sentence_bert", 
+            entity="intrandom5", 
+            name=args.log_name, 
+            notes=args.log_note
+        )
 
     for epoch in range(args.epochs):
         train_loss, valid_loss, model_state = train(model, train_loader, valid_loader, optimizer, criterion, device)
         print(f"Epoch: {epoch+1}, Train Loss: {train_loss:.4f}, Valid Loss: {valid_loss:.4f}")
+        wandb.log({"epoch": epoch+1, "Train Loss": train_loss, "Valid Loss": valid_loss})
         torch.save(model_state, os.path.join(args.model_path, f"epoch{epoch+1}.pt"))
 
     test_loader, tokenizer = prepare_test_data(args.test_df, args.test_img_path)
@@ -57,6 +66,9 @@ if __name__=="__main__":
     parser.add_argument("--epochs", type=int, help="epochs of training.")
     parser.add_argument("--learning_rate", type=float, help="learning rate")
     parser.add_argument("--submission_name", type=str, help="name of submission file.")
+    parser.add_argument("--logger", type=str, help="select logger. ['wandb', 'none']")
+    parser.add_argument("--log_name", type=str, help="name of experiment. only used when using wandb.")
+    parser.add_argument("--log_note", type=str, help="note of experiment. only used when using wandb.")
     args = parser.parse_args()
 
     main(args)
