@@ -15,24 +15,24 @@ def main(config):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     train_loader, valid_loader, vocab_size = prepare_training_data(
-        config["train_df"],
-        config["valid_df"],
-        config["train_img_path"]
+        args.train_df,
+        args.valid_df,
+        args.train_img_path
     )
 
     model = VQAModel(vocab_size)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.AdamW(model.parameters(), lr=config["learning_rate"])
+    optimizer = optim.AdamW(model.parameters(), lr=args.learning_rate)
 
-    if not os.path.exists(config["model_path"]):
-        os.mkdir(config["model_path"])
+    if not os.path.exists(args.model_path):
+        os.mkdir(args.model_path)
 
-    for epoch in range(config["epochs"]):
+    for epoch in range(args.epochs):
         train_loss, valid_loss, model_state = train(model, train_loader, valid_loader, optimizer, criterion, device)
         print(f"Epoch: {epoch+1}, Train Loss: {train_loss:.4f}, Valid Loss: {valid_loss:.4f}")
-        torch.save(model_state, os.path.join(config["model_path"], f"epoch{epoch+1}.pt"))
+        torch.save(model_state, os.path.join(args.model_path, f"epoch{epoch+1}.pt"))
 
-    test_loader, tokenizer = prepare_test_data(config["test_df"], config["test_img_path"])
+    test_loader, tokenizer = prepare_test_data(args.test_df, args.test_img_path)
     preds = inference(model, test_loader)
 
     no_pad_output = []
@@ -40,16 +40,21 @@ def main(config):
         output = pred[pred != 50257]
         no_pad_output.append(tokenizer.decode(output).strip())
 
-    sample_submission = pd.read_csv('sample_submission.csv')
+    sample_submission = pd.read_csv('../sample_submission.csv')
     sample_submission["answer"] = no_pad_output
-    sample_submission.to_csv(config["submission_name"], index=False)
+    sample_submission.to_csv(args.submission_name, index=False)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--conf", type=str, default="config.yaml")
+    parser.add_argument("--train_df", type=str, help="path of train csv file.")
+    parser.add_argument("--valid_df", type=str, help="path of valid csv file.")
+    parser.add_argument("--test_df", type=str, help="path of test csv file.")
+    parser.add_argument("--train_img_path", type=str, help="path of train image features in '.pkl' format.")
+    parser.add_argument("--test_img_path", type=str, help="path of test image features in '.pkl' format.")
+    parser.add_argument("--model_path", type=str, help="path of model to save.")
+    parser.add_argument("--epochs", type=int, help="epochs of training.")
+    parser.add_argument("--learning_rate", type=float, help="learning rate")
+    parser.add_argument("--submission_name": type=str, help="name of submission file.")
     args = parser.parse_args()
 
-    with open(args.conf, "r") as f:
-        config = yaml.load(f, Loader=yaml.Loader)
-
-    main(config)
+    main(args)
