@@ -1,0 +1,13 @@
+# Setting file path.
+train_df: "path of train csv file"
+valid_df: "path of valid csv file"
+test_df: "path of test csv file"
+training_img_path: "paht of train image file folder"
+test_img_path: "path of test image file folder"
+
+# Setting Training.
+epochs: "number of epoch"
+learning_rate: 5.e-5
+
+# Setting Inference.
+submission_name: "name of submission file. it must ends with '.csv'"
