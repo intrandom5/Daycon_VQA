@@ -6,7 +6,7 @@ training_img_path: "paht of train image file folder"
 
 # Setting save result.
 test_img_path: "path of test image file folder"
-model_path: "path of model to save. must ends with '.pt' or '.pth'"
+model_path: "path of model to save. it has to be folder name."
 
 # Setting Training.
 epochs: "number of epoch"
