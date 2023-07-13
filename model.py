@@ -16,7 +16,7 @@ class VQAModel(nn.Module):
         combined_features_size = 1000 + self.gpt2.config.hidden_size # resnet 출력 차원 + gpt2 출력 차원
         self.classifier = nn.Linear(combined_features_size, vocab_size)
 
-    def forward(self, image_featrues, question):
+    def forward(self, image_features, question):
         # image_features = self.resnet(images)
         image_features = image_features.view(image_features.size(0),-1)
 
