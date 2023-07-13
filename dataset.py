@@ -1,14 +1,14 @@
 from torch.utils.data import Dataset
 from PIL import Image
+import torch
 import os
 
 
 class VQADataset(Dataset):
-    def __init__(self, df, tokenizer, transform, img_path, is_test=False):
+    def __init__(self, df, tokenizer, representation, is_test=False):
         self.df = df
         self.tokenizer = tokenizer
-        self.transform = transform
-        self.img_path = img_path
+        self.representation = torch.cat(representation, dim=0)
         self.is_test = is_test
 
     def __len__(self):
@@ -16,10 +16,8 @@ class VQADataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-
-        img_name = os.path.join(self.img_path, row['image_id'] + '.jpg') # 이미지
-        image = Image.open(img_name).convert('RGB')
-        image = self.transform(image)
+        img_id = row["image_id"].split("_")[1]
+        img_rep = self.representation[int(img_id)]
 
         question = row['question'] # 질문
         question = self.tokenizer.encode_plus(
@@ -41,13 +39,13 @@ class VQADataset(Dataset):
                 truncation=True,
                 return_tensors='pt')
             return {
-                'image': image.squeeze(),
+                'image': img_rep,
                 'question': question['input_ids'].squeeze(),
                 'answer': answer['input_ids'].squeeze()
             }
         else:
             return {
-                'image': image,
+                'image': img_rep,
                 'question': question['input_ids'].squeeze(),
             }
         
