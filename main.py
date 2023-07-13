@@ -54,7 +54,7 @@ if __name__=="__main__":
     parser.add_argument("--model_path", type=str, help="path of model to save.")
     parser.add_argument("--epochs", type=int, help="epochs of training.")
     parser.add_argument("--learning_rate", type=float, help="learning rate")
-    parser.add_argument("--submission_name": type=str, help="name of submission file.")
+    parser.add_argument("--submission_name", type=str, help="name of submission file.")
     args = parser.parse_args()
 
     main(args)
