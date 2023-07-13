@@ -21,7 +21,7 @@ class VQAModel(nn.Module):
     def forward(self, images, question):
         if self.contain_resnet:
             images = self.resnet(images)
-        image_features = image_features.view(images.size(0),-1)
+        image_features = images.view(images.size(0),-1)
 
         outputs = self.gpt2(question)
         output_features = outputs.last_hidden_state # [batch, sequence, hidden]
