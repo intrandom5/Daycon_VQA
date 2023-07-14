@@ -21,7 +21,10 @@ def main(args):
         args.train_img_path
     )
 
-    model = VQAModel(vocab_size)
+    if args.train_img_path.endswith("pkl"):
+        model = VQAModel(vocab_size, contain_resnet=False)
+    else:
+        model = VQAModel(vocab_size, contain_resnet=True)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(), lr=args.learning_rate)
 
@@ -60,8 +63,8 @@ if __name__=="__main__":
     parser.add_argument("--train_df", type=str, help="path of train csv file.")
     parser.add_argument("--valid_df", type=str, help="path of valid csv file.")
     parser.add_argument("--test_df", type=str, help="path of test csv file.")
-    parser.add_argument("--train_img_path", type=str, help="path of train image features in '.pkl' format.")
-    parser.add_argument("--test_img_path", type=str, help="path of test image features in '.pkl' format.")
+    parser.add_argument("--train_img_path", type=str, help="path of train image features in '.pkl' format or folder contains image.")
+    parser.add_argument("--test_img_path", type=str, help="path of test image features in '.pkl' format or folder contains image.")
     parser.add_argument("--model_path", type=str, help="path of model to save.")
     parser.add_argument("--epochs", type=int, help="epochs of training.")
     parser.add_argument("--learning_rate", type=float, help="learning rate")
