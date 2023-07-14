@@ -12,7 +12,6 @@ class scaled_dot_product_attn(nn.Module):
         self.d_k = d_k
 
     def forward(self, query, key, value):
-        print(query.shape, key.shape, value.shape)
         x = torch.matmul(query, key.transpose(2, 3))
         x /= np.sqrt(self.d_k)
         x = F.softmax(x, dim=-1)
