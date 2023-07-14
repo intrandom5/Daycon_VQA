@@ -1,14 +1,22 @@
 from torch.utils.data import Dataset
 from PIL import Image
+import pickle
 import torch
+import glob
 import os
 
 
 class VQADataset(Dataset):
-    def __init__(self, df, tokenizer, representation, is_test=False):
+    def __init__(self, df, tokenizer, transforms, img_path, is_test=False):
         self.df = df
         self.tokenizer = tokenizer
-        self.representation = torch.cat(representation, dim=0)
+        self.transforms = transforms
+        self.img_path = img_path
+        if img_path.endswith("pkl"):
+            with open(img_path, "rb") as f:
+                reps = pickle.load(f)
+            self.reps = torch.cat(reps, dim=0)
+            
         self.is_test = is_test
 
     def __len__(self):
@@ -16,8 +24,14 @@ class VQADataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        img_id = row["image_id"].split("_")[1]
-        img_rep = self.representation[int(img_id)]
+
+        if self.img_path.endswith("pkl"):
+            img_id = row["image_id"].split("_")[1]
+            image = self.reps[int(img_id)]
+        else:
+            img_name = os.path.join(self.img_path, row['image_id'] + '.jpg') # 이미지
+            image = Image.open(img_name).convert('RGB')
+            image = self.transforms(image)
 
         question = row['question'] # 질문
         question = self.tokenizer.encode_plus(
@@ -39,13 +53,13 @@ class VQADataset(Dataset):
                 truncation=True,
                 return_tensors='pt')
             return {
-                'image': img_rep,
+                'image': image,
                 'question': question['input_ids'].squeeze(),
                 'answer': answer['input_ids'].squeeze()
             }
         else:
             return {
-                'image': img_rep,
+                'image': image,
                 'question': question['input_ids'].squeeze(),
             }
         
