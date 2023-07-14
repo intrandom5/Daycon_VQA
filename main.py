@@ -38,7 +38,7 @@ def main(args):
         torch.save(model_state, os.path.join(args.model_path, f"epoch{epoch+1}.pt"))
 
     test_loader, tokenizer = prepare_test_data(args.test_df, args.test_img_path)
-    preds = inference(model, test_loader)
+    preds = inference(model, test_loader, device)
 
     no_pad_output = []
     for pred in preds:
