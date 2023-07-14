@@ -14,8 +14,7 @@ class VQADataset(Dataset):
         self.img_path = img_path
         if img_path.endswith("pkl"):
             with open(img_path, "rb") as f:
-                reps = pickle.load(f)
-            self.reps = torch.cat(reps, dim=0)
+                self.reps = pickle.load(f)
             
         self.is_test = is_test
 
