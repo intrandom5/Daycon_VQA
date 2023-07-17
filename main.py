@@ -83,6 +83,7 @@ if __name__=="__main__":
     parser.add_argument("--train_img_path", type=str, help="path of train image features in '.pkl' format or folder contains image.")
     parser.add_argument("--test_img_path", type=str, help="path of test image features in '.pkl' format or folder contains image.")
     parser.add_argument("--model_path", type=str, help="path of model to save.")
+    parser.add_argument("--model_type", type=str, help="type of pretrained language model to use. ['gpt2', 'bart']")
     parser.add_argument("--epochs", type=int, help="epochs of training.")
     parser.add_argument("--learning_rate", type=float, help="learning rate")
     parser.add_argument("--submission_name", type=str, help="name of submission file.")
