@@ -2,17 +2,20 @@ import torch
 import pandas as pd
 from tqdm.auto import tqdm
 from dataset import VQADataset
-from transformers import GPT2Tokenizer
+from transformers import GPT2Tokenizer, AutoTokenizer
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
 
-def prepare_training_data(train_df_path, valid_df_path, train_img_path):
+def prepare_training_data(train_df_path, valid_df_path, train_img_path, model_type):
     train_df = pd.read_csv(train_df_path)
     valid_df = pd.read_csv(valid_df_path)
 
-    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-    tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+    if model_type == "gpt2":
+        tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+        tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+    elif model_type == "bart":
+        tokenizer = AutoTokenizer.from_pretrained("facebook/bart-base")
     vocab_size = len(tokenizer)
 
     transform = transforms.Compose([
