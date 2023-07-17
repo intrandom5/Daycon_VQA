@@ -8,15 +8,21 @@ import torch.nn as nn
 import torch.optim as optim
 
 from model import VQAModel
-from transformers import GPT2Tokenizer
+from transformers import GPT2Tokenizer, AutoTokenizer
 from utils import prepare_data, train, inference
 
 
 def main(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-    tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+    assert args.model_type in ["gpt2", "bart"]
+
+    if args.model_type == "gpt2":
+        tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+        tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+    elif args.model_type == "bart":
+        tokenizer = AutoTokenizer.from_pretrained("facebook/bart-base")
+
     vocab_size = len(tokenizer)
 
     train_loader = prepare_data(
