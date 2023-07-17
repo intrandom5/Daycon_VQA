@@ -2,21 +2,12 @@ import torch
 import pandas as pd
 from tqdm.auto import tqdm
 from dataset import VQADataset
-from transformers import GPT2Tokenizer, AutoTokenizer
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
 
-def prepare_training_data(train_df_path, valid_df_path, train_img_path, model_type):
-    train_df = pd.read_csv(train_df_path)
-    valid_df = pd.read_csv(valid_df_path)
-
-    if model_type == "gpt2":
-        tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-        tokenizer.add_special_tokens({"pad_token": "[PAD]"})
-    elif model_type == "bart":
-        tokenizer = AutoTokenizer.from_pretrained("facebook/bart-base")
-    vocab_size = len(tokenizer)
+def prepare_data(df_path, img_path, tokenizer, test_mode):
+    df = pd.read_csv(df_path)
 
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -24,28 +15,11 @@ def prepare_training_data(train_df_path, valid_df_path, train_img_path, model_ty
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
-    train_dataset = VQADataset(train_df, tokenizer, transform, train_img_path, is_test=False)
-    valid_dataset = VQADataset(valid_df, tokenizer, transform, train_img_path, is_test=False)
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    valid_loader = DataLoader(valid_dataset, batch_size=64, shuffle=False)
+    dataset = VQADataset(df, tokenizer, transform, img_path, is_test=test_mode)
+    shuffle = not test_mode
+    loader = DataLoader(dataset, batch_size=64, shuffle=shuffle)
 
-    return train_loader, valid_loader, vocab_size
-
-def prepare_test_data(test_df_path, test_img_path):
-    test_df = pd.read_csv(test_df_path)
-
-    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-    tokenizer.add_special_tokens({"pad_token": "[PAD]"})
-    
-    transform = transforms.Compose([
-        transforms.Resize((112, 112)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
-
-    test_dataset = VQADataset(test_df, tokenizer, transform, test_img_path, is_test=True)
-    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
-    return test_loader, tokenizer
+    return loader
 
 def train(model, train_loader, valid_loader, optimizer, criterion, device):
     model.train()
