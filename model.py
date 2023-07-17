@@ -24,7 +24,7 @@ class VQAModel(nn.Module):
         combined_features_size = 1024 + self.lm.config.hidden_size
         self.classifier = nn.Linear(combined_features_size, vocab_size)
 
-    def forward(self, images, question, answer, attention_mask):
+    def forward(self, images, question, attention_mask, answer=None):
         if self.contain_resnet:
             images = self.resnet(images)
         image_features = images.view(images.size(0),-1)
