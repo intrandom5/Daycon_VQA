@@ -67,9 +67,10 @@ def inference(model, loader, device):
     with torch.no_grad():
         for data in tqdm(loader, total=len(loader)):
             images = data['image'].to(device)
+            attention_mask = data['attention_mask'].to(device)
             question = data['question'].to(device)
 
-            outputs = model(images, question) # [batch, sequence, vocab]
+            outputs = model(images, question, attention_mask)
 
             _, pred = torch.max(outputs, dim=2) # values, indices = _, pred
             preds.extend(pred.cpu().numpy())
