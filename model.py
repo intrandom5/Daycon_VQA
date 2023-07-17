@@ -5,7 +5,7 @@ from transformers import lmModel, BartModel
 
 
 class VQAModel(nn.Module):
-    def __init__(self, vocab_size, contain_resnet: bool = True, model_type="lm"):
+    def __init__(self, vocab_size, contain_resnet: bool = True, model_type: str = "gpt2"):
         super(VQAModel, self).__init__()
         self.vocab_size = vocab_size
         self.contain_resnet = contain_resnet
