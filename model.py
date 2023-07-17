@@ -32,7 +32,7 @@ class VQAModel(nn.Module):
         if self.model_type == "gpt2":
             outputs = self.lm(question)
         elif self.model_type == "bart":
-            outputs = self.lm(question, attention_mask=attention_mask, decoder_input_ids=answer)
+            outputs = self.lm(input_ids=question, attention_mask=attention_mask, decoder_input_ids=answer)
         output_features = outputs.last_hidden_state # [batch, sequence, hidden]
 
         image_features = image_features.unsqueeze(1).expand(-1, output_features.size(1),-1) # [batch, sequence, 1000]
