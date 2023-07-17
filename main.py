@@ -68,7 +68,7 @@ def main(args):
 
     no_pad_output = []
     for pred in preds:
-        output = pred[pred != 50257]
+        output = pred[pred != tokenizer.pad_token_id]
         no_pad_output.append(tokenizer.decode(output).strip())
 
     sample_submission = pd.read_csv('../sample_submission.csv')
