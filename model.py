@@ -21,7 +21,7 @@ class VQAModel(nn.Module):
         elif model_type == "bart":
             self.lm = BartModel.from_pretrained("facebook/bart-base")
 
-        combined_features_size = 1000 + self.lm.config.hidden_size
+        combined_features_size = 1024 + self.lm.config.hidden_size
         self.classifier = nn.Linear(combined_features_size, vocab_size)
 
     def forward(self, images, question, answer, attention_mask):
