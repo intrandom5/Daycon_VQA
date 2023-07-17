@@ -8,22 +8,35 @@ import torch.nn as nn
 import torch.optim as optim
 
 from model import VQAModel
-from utils import prepare_training_data, prepare_test_data, train, inference
+from transformers import GPT2Tokenizer
+from utils import prepare_data, train, inference
 
 
 def main(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    train_loader, valid_loader, vocab_size = prepare_training_data(
+    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+    vocab_size = len(tokenizer)
+
+    train_loader = prepare_data(
         args.train_df,
+        args.train_img_path,
+        tokenizer=tokenizer,
+        test_mode=False
+    )
+    valid_loader = prepare_data(
         args.valid_df,
-        args.train_img_path
+        args.train_img_path,
+        tokenizer=tokenizer,
+        test_mode=True
     )
 
     if args.train_img_path.endswith("pkl"):
         model = VQAModel(vocab_size, contain_resnet=False)
     else:
         model = VQAModel(vocab_size, contain_resnet=True)
+        
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(), lr=args.learning_rate)
 
@@ -33,11 +46,18 @@ def main(args):
     model.to(device)
 
     for epoch in range(args.epochs):
-        train_loss, valid_loss, model_state = train(model, train_loader, valid_loader, optimizer, criterion, device)
+        train_loss, valid_loss, model_state = train(
+            model, train_loader, valid_loader, optimizer, criterion, device
+        )
         print(f"Epoch: {epoch+1}, Train Loss: {train_loss:.4f}, Valid Loss: {valid_loss:.4f}")
         torch.save(model_state, os.path.join(args.model_path, f"epoch{epoch+1}.pt"))
 
-    test_loader, tokenizer = prepare_test_data(args.test_df, args.test_img_path)
+    test_loader = prepare_data(
+        args.test_df, 
+        args.test_img_path, 
+        tokenizer=tokenizer,
+        test_mode=True
+    )
     preds = inference(model, test_loader, device)
 
     no_pad_output = []
