@@ -39,9 +39,9 @@ def main(args):
     )
 
     if args.train_img_path.endswith("pkl"):
-        model = VQAModel(vocab_size, contain_resnet=False)
+        model = VQAModel(vocab_size, False, args.model_type)
     else:
-        model = VQAModel(vocab_size, contain_resnet=True)
+        model = VQAModel(vocab_size, True, args.model_type)
         
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(), lr=args.learning_rate)
