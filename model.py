@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torchvision.models as models
-from transformers import lmModel, BartModel
+from transformers import GPT2Model, BartModel
 
 
 class VQAModel(nn.Module):
@@ -16,7 +16,7 @@ class VQAModel(nn.Module):
             self.resnet = models.resnet50(pretrained=True)
 
         if model_type == "gpt2":
-            self.lm = lmModel.from_pretrained('lm')
+            self.lm = GPT2Model.from_pretrained('lm')
             self.lm.resize_token_embeddings(vocab_size) # 추가한 [PAD] 토큰 반영
         elif model_type == "bart":
             self.lm = BartModel.from_pretrained("facebook/bart-base")
