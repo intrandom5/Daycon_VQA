@@ -29,10 +29,11 @@ def train(model, train_loader, valid_loader, optimizer, criterion, device):
         images = data['image'].to(device)
         question = data['question'].to(device)
         answer = data['answer'].to(device)
+        attention_mask = data['attention_mask'].to(device)
 
         optimizer.zero_grad()
 
-        outputs = model(images, question)
+        outputs = model(images, question, answer, attention_mask)
 
         # output: [batch, sequence, vocab], answer : [batch, sequence]
         loss = criterion(outputs.view(-1, outputs.size(-1)), answer.view(-1))
@@ -49,9 +50,10 @@ def train(model, train_loader, valid_loader, optimizer, criterion, device):
         images = data['image'].to(device)
         question = data['question'].to(device)
         answer = data['answer'].to(device)
+        attention_mask = data['attention_mask'].to(device)
 
         with torch.no_grad():
-            outputs = model(images, question)
+            outputs = model(images, question, attention_mask)
         loss = criterion(outputs.view(-1, outputs.size(-1)), answer.view(-1))
         total_loss += loss.item()
     
@@ -65,9 +67,10 @@ def inference(model, loader, device):
     with torch.no_grad():
         for data in tqdm(loader, total=len(loader)):
             images = data['image'].to(device)
+            attention_mask = data['attention_mask'].to(device)
             question = data['question'].to(device)
 
-            outputs = model(images, question) # [batch, sequence, vocab]
+            outputs = model(images, question, attention_mask)
 
             _, pred = torch.max(outputs, dim=2) # values, indices = _, pred
             preds.extend(pred.cpu().numpy())
