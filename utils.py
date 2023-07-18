@@ -53,7 +53,7 @@ def train(model, train_loader, valid_loader, optimizer, criterion, device):
         attention_mask = data['attention_mask'].to(device)
 
         with torch.no_grad():
-            outputs = model(images, question, answer, attention_mask)
+            outputs = model(images, question, attention_mask)
         loss = criterion(outputs.view(-1, outputs.size(-1)), answer.view(-1))
         total_loss += loss.item()
     
