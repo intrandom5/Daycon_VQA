@@ -36,7 +36,7 @@ def main(args):
         args.valid_df,
         args.train_img_path,
         tokenizer=tokenizer,
-        test_mode=True
+        test_mode=False
     )
 
     if args.train_img_path.endswith("pkl"):
