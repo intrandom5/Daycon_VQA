@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from model import BaseVQAModel
+from model import BaseVQAModel, VLT5
 from transformers import GPT2Tokenizer, AutoTokenizer, T5Tokenizer
 from utils import prepare_data, train, inference
 
@@ -41,10 +41,14 @@ def main(args):
         test_mode=False
     )
 
-    if args.train_img_path.endswith("pkl"):
-        model = BaseVQAModel(vocab_size, False, args.model_type)
+    if args.model_type == "gpt2":
+        if args.train_img_path.endswith("pkl"):
+            model = BaseVQAModel(vocab_size, False, args.model_type)
+        else:
+            model = BaseVQAModel(vocab_size, True, args.model_type)
     else:
-        model = BaseVQAModel(vocab_size, True, args.model_type)
+        model = VLT5(N=36)
+        model.set_device('cuda')
         
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(), lr=args.learning_rate)
