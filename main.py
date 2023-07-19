@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from model import BaseVQAModel
-from transformers import GPT2Tokenizer, AutoTokenizer
+from transformers import GPT2Tokenizer, AutoTokenizer, T5Tokenizer
 from utils import prepare_data, train, inference
 
 
@@ -23,6 +23,8 @@ def main(args):
         tokenizer.add_special_tokens({"pad_token": "[PAD]"})
     elif args.model_type == "bart":
         tokenizer = AutoTokenizer.from_pretrained("facebook/bart-base")
+    elif args.model_type == "t5":
+        tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-base")
 
     vocab_size = len(tokenizer)
 
