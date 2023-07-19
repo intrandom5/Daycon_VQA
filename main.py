@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from model import VQAModel
+from model import BaseVQAModel
 from transformers import GPT2Tokenizer, AutoTokenizer
 from utils import prepare_data, train, inference
 
@@ -40,9 +40,9 @@ def main(args):
     )
 
     if args.train_img_path.endswith("pkl"):
-        model = VQAModel(vocab_size, False, args.model_type)
+        model = BaseVQAModel(vocab_size, False, args.model_type)
     else:
-        model = VQAModel(vocab_size, True, args.model_type)
+        model = BaseVQAModel(vocab_size, True, args.model_type)
         
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(), lr=args.learning_rate)

@@ -4,9 +4,9 @@ import torchvision.models as models
 from transformers import GPT2Model, BartModel
 
 
-class VQAModel(nn.Module):
+class BaseVQAModel(nn.Module):
     def __init__(self, vocab_size, contain_resnet: bool = True, model_type: str = "gpt2"):
-        super(VQAModel, self).__init__()
+        super(BaseVQAModel, self).__init__()
         self.vocab_size = vocab_size
         self.contain_resnet = contain_resnet
         self.model_type = model_type
