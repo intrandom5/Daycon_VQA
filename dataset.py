@@ -54,8 +54,9 @@ class VQADataset(Dataset):
             return {
                 'image': image,
                 'question': question['input_ids'].squeeze(),
-                'attention_mask': question['attention_mask'].squeeze(),
-                'answer': answer['input_ids'].squeeze()
+                'question_attention_mask': question['attention_mask'].squeeze(),
+                'answer': answer['input_ids'].squeeze(),
+                'answer_attention_mask': answer['attention_mask'].squeeze()
             }
         else:
             return {
