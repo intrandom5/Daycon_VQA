@@ -151,8 +151,8 @@ def inference_vlt5(model, loader, device, max_length=32):
                 data['answer']['input_ids'] = torch.cat(
                     [data['answer']['input_ids'], next_token_id], dim=-1
                 )
-                data['attention_mask']['input_ids'] = torch.cat(
-                    [data['attention_mask']['input_ids'], torch.ones(batch_size, 1).to('cuda')], dim=-1
+                data['answer']['attention_mask'] = torch.cat(
+                    [data['answer']['attention_mask'], torch.ones(batch_size, 1).to('cuda')], dim=-1
                 )
             
             preds.extend(data['answer']['input_ids'].cpu().numpy())
