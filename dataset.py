@@ -96,8 +96,8 @@ class VLT5_Dataset(Dataset):
             return_tensors="pt"
         )
         return {
-            'image': img_feat,
-            'pos': bbox,
+            'image': img_feat.squeeze(),
+            'pos': bbox.squeeze(),
             'question': question,
             'answer': answer
         }
