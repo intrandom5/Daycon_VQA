@@ -1,10 +1,20 @@
 import torch
 import pandas as pd
 from tqdm.auto import tqdm
-from dataset import VQADataset
+from dataset import VQADataset, VLT5_Dataset
 from torch.utils.data import DataLoader
-from torchvision import transforms
 
+
+def prepare_data(df_path, tokenizer, test_mode, shuffle, img_path, bbox_path=None):
+    df = pd.read_csv(df_path)
+
+    if bbox_path is None:
+        dataset = VQADataset(df, tokenizer, img_path, is_test=test_mode)
+    else:
+        dataset = VLT5_Dataset(df, tokenizer, img_path, bbox_path, test_mode)
+    loader = DataLoader(dataset, bathc_size=64, shuffle=shuffle)
+
+    return loader
 
 def train(model, train_loader, valid_loader, optimizer, criterion, device):
     model.train()
