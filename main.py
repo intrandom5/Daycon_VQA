@@ -11,6 +11,7 @@ import torch.optim as optim
 from model import BaseVQAModel, VLT5
 from transformers import GPT2Tokenizer, AutoTokenizer, T5Tokenizer
 from utils import prepare_data, train, inference
+from dataset import VLT5_Dataset
 
 
 def main(args):
@@ -27,19 +28,25 @@ def main(args):
         tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-base")
 
     vocab_size = len(tokenizer)
-
-    train_loader = prepare_data(
-        args.train_df,
-        args.train_img_path,
-        tokenizer=tokenizer,
-        test_mode=False
-    )
-    valid_loader = prepare_data(
-        args.valid_df,
-        args.train_img_path,
-        tokenizer=tokenizer,
-        test_mode=False
-    )
+    if args.model_type=="vlt5":
+        train_dataset = VLT5_Dataset(
+            args.train_df, 
+            tokenizer,
+            args.
+            )
+    else:
+        train_loader = prepare_data(
+            args.train_df,
+            args.train_img_path,
+            tokenizer=tokenizer,
+            test_mode=False
+        )
+        valid_loader = prepare_data(
+            args.valid_df,
+            args.train_img_path,
+            tokenizer=tokenizer,
+            test_mode=False
+        )
 
     if args.model_type == "gpt2":
         if args.train_img_path.endswith("pkl"):
@@ -97,6 +104,8 @@ if __name__=="__main__":
     parser.add_argument("--test_df", type=str, help="path of test csv file.")
     parser.add_argument("--train_img_path", type=str, help="path of train image features in '.pkl' format or folder contains image.")
     parser.add_argument("--test_img_path", type=str, help="path of test image features in '.pkl' format or folder contains image.")
+    parser.add_argument("--train_bbox_path", type=str, help="path of train bbox features.")
+    parser.add_argument("--test_bbox_path", type=str, help="path of test bbox features.")
     parser.add_argument("--model_path", type=str, help="path of model to save.")
     parser.add_argument("--model_type", type=str, help="type of pretrained language model to use. ['gpt2', 'bart', 'vlt5']")
     parser.add_argument("--epochs", type=int, help="epochs of training.")
