@@ -23,7 +23,7 @@ def prepare_data(df_path, tokenizer, test_mode, shuffle, img_feats, bboxes=None)
         dataset = VQADataset(df, tokenizer, img_feats, is_test=test_mode)
     else:
         dataset = VLT5_Dataset(df, tokenizer, img_feats, bboxes, test_mode)
-    loader = DataLoader(dataset, bathc_size=64, shuffle=shuffle)
+    loader = DataLoader(dataset, batch_size=64, shuffle=shuffle)
 
     return loader
 
