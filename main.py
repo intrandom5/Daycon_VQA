@@ -40,7 +40,7 @@ def main(args):
     # define Dataloader
     if args.model_type == "vlt5":
         train_loader = prepare_data(
-            args.train_df_path,
+            args.train_df,
             tokenizer,
             test_mode=False,
             shuffle=True,
@@ -48,7 +48,7 @@ def main(args):
             bboxes=train_bboxes
         )
         valid_loader = prepare_data(
-            args.valid_df_path,
+            args.valid_df,
             tokenizer,
             test_mode=False,
             shuffle=False,
@@ -57,14 +57,14 @@ def main(args):
         )
     else:
         train_loader = prepare_data(
-            args.train_df_path,
+            args.train_df,
             tokenizer,
             test_mode=False,
             shuffle=True,
             img_path=args.train_img_path
         )
         valid_loader = prepare_data(
-            args.valid_df_path,
+            args.valid_df,
             tokenizer,
             test_mode=False,
             shuffle=False,
