@@ -1,9 +1,4 @@
 from torch.utils.data import Dataset
-from PIL import Image
-import pickle
-import torch
-import glob
-import os
 
 
 class VQADataset(Dataset):
@@ -98,7 +93,7 @@ class VLT5_Dataset(Dataset):
         return {
             'image': img_feat.squeeze(),
             'pos': bbox.squeeze(),
-            'question': question,
-            'answer': answer
+            'question': {k: v.squeeze() for k, v in question.items()},
+            'answer': {k: v.squeeze() for k, v in answer.items()},
         }
         
