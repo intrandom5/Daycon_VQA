@@ -9,7 +9,7 @@ class VQADataset(Dataset):
         self.is_test = is_test
 
     def __len__(self):
-        return len(self.df)
+        return len(self.img_feats)
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
@@ -59,7 +59,7 @@ class VLT5_Dataset(Dataset):
         self.is_test = is_test
 
     def __len__(self):
-        return len(self.df)
+        return len(self.image_feats)
     
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
