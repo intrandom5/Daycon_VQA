@@ -32,7 +32,7 @@ def main(args):
     print("load FRCNN features...")
     img_feat_pkls = sorted(glob.glob(args.train_img_path+"/*.pkl"))
     train_img_feats = load_pickles(img_feat_pkls)
-    if args.train_bbox_path:
+    if args.train_bbox_path != "none":
         bboxes = sorted(glob.glob(args.train_bbox_path+"/*.pkl"))
         train_bboxes = load_pickles(bboxes)
     print("Done!")
@@ -153,8 +153,8 @@ if __name__=="__main__":
     parser.add_argument("--test_df", type=str, help="path of test csv file.")
     parser.add_argument("--train_img_path", type=str, help="path of train image features in '.pkl' format or folder contains image.")
     parser.add_argument("--test_img_path", type=str, help="path of test image features in '.pkl' format or folder contains image.")
-    parser.add_argument("--train_bbox_path", type=str, default=None, help="path of train bbox features.")
-    parser.add_argument("--test_bbox_path", type=str, default=None, help="path of test bbox features.")
+    parser.add_argument("--train_bbox_path", type=str, default="none", help="path of train bbox features.")
+    parser.add_argument("--test_bbox_path", type=str, default="none", help="path of test bbox features.")
     parser.add_argument("--model_path", type=str, help="path of model to save.")
     parser.add_argument("--model_type", type=str, help="type of pretrained language model to use. ['gpt2', 'bart', 'vlt5']")
     parser.add_argument("--epochs", type=int, help="epochs of training.")
