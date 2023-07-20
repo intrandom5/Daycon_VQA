@@ -7,14 +7,10 @@ import os
 
 
 class VQADataset(Dataset):
-    def __init__(self, df, tokenizer, img_path, is_test=False):
+    def __init__(self, df, tokenizer, img_feats, is_test=False):
         self.df = df
         self.tokenizer = tokenizer
-        self.img_path = img_path
-        if img_path.endswith("pkl"):
-            with open(img_path, "rb") as f:
-                self.reps = pickle.load(f)
-            
+        self.img_feats = img_feats
         self.is_test = is_test
 
     def __len__(self):
@@ -59,15 +55,13 @@ class VQADataset(Dataset):
                 'attention_mask': question['attention_mask'].squeeze(),
             }
         
-        
 class VLT5_Dataset(Dataset):
     def __init__(self, df, tokenizer, img_feats, bboxes, is_test=False):
         self.df = df
         self.tokenizer = tokenizer
-        self.is_test = is_test
-
         self.img_feats = img_feats
         self.bboxes = bboxes
+        self.is_test = is_test
 
     def __len__(self):
         return len(self.df)
