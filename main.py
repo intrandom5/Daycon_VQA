@@ -11,7 +11,7 @@ import torch.optim as optim
 
 from model import BaseVQAModel, VLT5
 from transformers import GPT2Tokenizer, AutoTokenizer, T5Tokenizer
-from utils import load_pickles, prepare_data, train, inference, train_vlt5
+from utils import load_pickles, prepare_data, train, inference, train_vlt5, inference_vlt5
 
 
 def main(args):
@@ -124,6 +124,8 @@ def main(args):
             img_feats=test_img_feats,
             bboxes=test_bboxes
         )
+        print("Done!")
+        preds = inference_vlt5(model, test_loader, device)
     else:
         test_loader = prepare_data(
             args.test_df, 
@@ -132,14 +134,13 @@ def main(args):
             shuffle=False,
             img_feats=test_img_feats
         )
-    print("Done!")
-    
-    preds = inference(model, test_loader, device)
+        preds = inference(model, test_loader, device)
 
     no_pad_output = []
     for pred in preds:
-        output = pred[pred != tokenizer.pad_token_id]
-        no_pad_output.append(tokenizer.decode(output).strip())
+        no_pad_output.append(
+            tokenizer.decode(pred, skip_special_tokens=True).strip().replace("answer :", "")
+        )
 
     sample_submission = pd.read_csv('../sample_submission.csv')
     sample_submission["answer"] = no_pad_output
