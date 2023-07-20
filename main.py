@@ -11,7 +11,7 @@ import torch.optim as optim
 
 from model import BaseVQAModel, VLT5
 from transformers import GPT2Tokenizer, AutoTokenizer, T5Tokenizer
-from utils import load_pickles, prepare_data, train, inference
+from utils import load_pickles, prepare_data, train, inference, train_vlt5
 
 
 def main(args):
@@ -98,9 +98,14 @@ def main(args):
 
     # Training Start!
     for epoch in range(args.epochs):
-        train_loss, valid_loss, model_state = train(
-            model, train_loader, valid_loader, optimizer, criterion, device
-        )
+        if args.model_type == "vlt5":
+            train_loss, valid_loss, model_state = train_vlt5(
+                model, train_loader, valid_loader, optimizer, criterion, device
+            )
+        else:
+            train_loss, valid_loss, model_state = train(
+                model, train_loader, valid_loader, optimizer, criterion, device
+            )
         print(f"Epoch: {epoch+1}, Train Loss: {train_loss:.4f}, Valid Loss: {valid_loss:.4f}")
         wandb.log({"epoch": epoch+1, "Train Loss": train_loss, "Valid Loss": valid_loss})
         torch.save(model_state, os.path.join(args.model_path, f"epoch{epoch+1}.pt"))
