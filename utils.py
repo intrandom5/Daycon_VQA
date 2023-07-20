@@ -82,3 +82,48 @@ def inference(model, loader, device):
             preds.extend(pred.cpu().numpy())
 
     return preds
+
+def train_vlt5(model, train_loader, valid_loader, optimizer, criterion, device):
+    model.train()
+    total_loss = 0
+
+    for data in tqdm(train_loader, total=len(train_loader)):
+        data['image'] = data['image'].to('cuda')
+        data['pos'] = data['pos'].to('cuda')
+        data['question'] = {k: v.to('cuda') for k, v in data['question'].items()}
+        data['answer'] = {k: v.to('cuda') for k, v in data['answer'].items()}
+        label = data['answer']['input_ids']
+        data['answer']['input_ids'] = model.T5._shift_right(data['answer']['input_ids'])
+
+        optimizer.zero_grad()
+
+        outputs = model(data['question'], data['answer'], data['image'], data['pos'])
+
+        # output: [batch, sequence, vocab], answer : [batch, sequence]
+        loss = criterion(outputs.view(-1, outputs.size(-1)), label.view(-1))
+        total_loss += loss.item()
+
+        loss.backward()
+        optimizer.step()
+
+    train_loss = total_loss / len(train_loader)
+
+    model.eval()
+    total_loss = 0
+    for data in tqdm(valid_loader, total=len(valid_loader)):
+        data['image'] = data['image'].to('cuda')
+        data['pos'] = data['pos'].to('cuda')
+        data['question'] = {k: v.to('cuda') for k, v in data['question'].items()}
+        data['answer'] = {k: v.to('cuda') for k, v in data['answer'].items()}
+        label = data['answer']['input_ids']
+        data['answer']['input_ids'] = model.T5._shift_right(data['answer']['input_ids'])
+
+        outputs = model(data['question'], data['answer'], data['image'], data['pos'])
+
+        # output: [batch, sequence, vocab], answer : [batch, sequence]
+        loss = criterion(outputs.view(-1, outputs.size(-1)), label.view(-1))
+        total_loss += loss.item()
+    
+    valid_loss = total_loss / len(valid_loader)
+
+    return train_loss, valid_loss, model.state_dict()
