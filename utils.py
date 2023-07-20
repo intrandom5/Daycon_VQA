@@ -7,27 +7,20 @@ from dataset import VQADataset, VLT5_Dataset
 from torch.utils.data import DataLoader
 
 
-def prepare_data(df_path, tokenizer, test_mode, shuffle, img_path, bbox_path=None):
+def load_pickles(files):
+    print("load FRCNN features...")
+    results = []
+    for file in files:
+        with open(file, "rb") as f:
+            results += pickle.load(f)
+    print("Done!")
+    return results
+
+
+def prepare_data(df_path, tokenizer, test_mode, shuffle, img_feats, bboxes=None):
     df = pd.read_csv(df_path)
 
-    if bbox_path != None:
-        img_feats = []
-        bboxes = []
-        print("load FRCNN features...")
-        img_pkl_files = sorted(glob.glob(img_path+"/*.pkl"))
-        for pkl in img_pkl_files:
-            with open(pkl, "rb") as f:
-                img_feats += pickle.load(f)
-        bbox_pkl_files = sorted(glob.glob(bbox_path+"/*.pkl"))
-        for pkl in bbox_pkl_files:
-            with open(pkl, "rb") as f:
-                bboxes += pickle.load(f)
-        print("Done!")
-    else:
-        with open(img_path, "rb") as f:
-            img_feats = pickle.load(f)
-
-    if bbox_path is None:
+    if bboxes is None:
         dataset = VQADataset(df, tokenizer, img_feats, is_test=test_mode)
     else:
         dataset = VLT5_Dataset(df, tokenizer, img_feats, bboxes, test_mode)
