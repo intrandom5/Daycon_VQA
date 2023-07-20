@@ -6,21 +6,6 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 
-def prepare_data(df_path, img_path, tokenizer, test_mode):
-    df = pd.read_csv(df_path)
-
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
-
-    dataset = VQADataset(df, tokenizer, transform, img_path, is_test=test_mode)
-    shuffle = not test_mode
-    loader = DataLoader(dataset, batch_size=64, shuffle=shuffle)
-
-    return loader
-
 def train(model, train_loader, valid_loader, optimizer, criterion, device):
     model.train()
     total_loss = 0
