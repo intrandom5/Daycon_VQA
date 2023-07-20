@@ -67,10 +67,9 @@ class VQADataset(Dataset):
         
         
 class VLT5_Dataset(Dataset):
-    def __init__(self, df, tokenizer, transforms, img_feat_path, bbox_path, is_test=False):
+    def __init__(self, df, tokenizer, img_feat_path, bbox_path, is_test=False):
         self.df = df
         self.tokenizer = tokenizer
-        self.transforms = transforms
         self.is_test = is_test
 
         self.img_feats = []
