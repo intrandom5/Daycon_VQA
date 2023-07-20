@@ -7,10 +7,9 @@ import os
 
 
 class VQADataset(Dataset):
-    def __init__(self, df, tokenizer, transforms, img_path, is_test=False):
+    def __init__(self, df, tokenizer, img_path, is_test=False):
         self.df = df
         self.tokenizer = tokenizer
-        self.transforms = transforms
         self.img_path = img_path
         if img_path.endswith("pkl"):
             with open(img_path, "rb") as f:
@@ -24,13 +23,8 @@ class VQADataset(Dataset):
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
 
-        if self.img_path.endswith("pkl"):
-            img_id = row["image_id"].split("_")[1]
-            image = self.reps[int(img_id)]
-        else:
-            img_name = os.path.join(self.img_path, row['image_id'] + '.jpg') # 이미지
-            image = Image.open(img_name).convert('RGB')
-            image = self.transforms(image)
+        img_id = row["image_id"].split("_")[1]
+        image = self.reps[int(img_id)]
 
         question = row['question'] # 질문
         question = self.tokenizer.encode_plus(
