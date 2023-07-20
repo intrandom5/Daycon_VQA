@@ -71,19 +71,26 @@ class VLT5_Dataset(Dataset):
         img_feat = self.img_feats[idx]
         bbox = self.bboxes[idx]
 
-        question = self.tokenizer(
-            row['question'],
+        question = "question : " + row['question']
+
+        question = self.tokenizer.encode_plus(
+            question,
+            truncation=True,
+            add_special_tokens=True,
             max_length=32,
             padding="max_length",
-            truncation=True,
+            return_attention_mask=True,
             return_tensors="pt"
         )
         if not self.is_test:
-            answer = self.tokenizer(
-                row['answer'],
+            answer = "answer : " + row['answer']
+            answer = self.tokenizer.encode_plus(
+                answer,
+                truncation=True,
+                add_special_tokens=True,
                 max_length=32,
                 padding="max_length",
-                truncation=True,
+                return_attention_mask=True,
                 return_tensors="pt"
             )
             return {
