@@ -16,14 +16,14 @@ from utils import prepare_data, train, inference
 def main(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    assert args.model_type in ["gpt2", "bart", "t5"]
+    assert args.model_type in ["gpt2", "bart", "vlt5"]
 
     if args.model_type == "gpt2":
         tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
         tokenizer.add_special_tokens({"pad_token": "[PAD]"})
     elif args.model_type == "bart":
         tokenizer = AutoTokenizer.from_pretrained("facebook/bart-base")
-    elif args.model_type == "t5":
+    elif args.model_type == "vlt5":
         tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-base")
 
     vocab_size = len(tokenizer)
@@ -98,7 +98,7 @@ if __name__=="__main__":
     parser.add_argument("--train_img_path", type=str, help="path of train image features in '.pkl' format or folder contains image.")
     parser.add_argument("--test_img_path", type=str, help="path of test image features in '.pkl' format or folder contains image.")
     parser.add_argument("--model_path", type=str, help="path of model to save.")
-    parser.add_argument("--model_type", type=str, help="type of pretrained language model to use. ['gpt2', 'bart', 't5']")
+    parser.add_argument("--model_type", type=str, help="type of pretrained language model to use. ['gpt2', 'bart', 'vlt5']")
     parser.add_argument("--epochs", type=int, help="epochs of training.")
     parser.add_argument("--learning_rate", type=float, help="learning rate")
     parser.add_argument("--submission_name", type=str, help="name of submission file.")
