@@ -63,8 +63,9 @@ class VLT5_Dataset(Dataset):
     
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        img_feat = self.img_feats[idx]
-        bbox = self.bboxes[idx]
+        img_id = row["image_id"].split("_")[1]
+        img_feat = self.img_feats[int(img_id)]
+        bbox = self.bboxes[int(img_id)]
 
         question = "question : " + row['question']
 
