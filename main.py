@@ -32,9 +32,9 @@ def main(args):
     print("load FRCNN features...")
     img_feat_pkls = sorted(glob.glob(args.train_img_path+"/*.pkl"))
     train_img_feats = load_pickles(img_feat_pkls)
-    if args.train_bbox_path != None:
+    if args.train_bbox_path:
         bboxes = sorted(glob.glob(args.train_bbox_path+"/*.pkl"))
-    train_bboxes = load_pickles(bboxes)
+        train_bboxes = load_pickles(bboxes)
     print("Done!")
 
     # define Dataloader
