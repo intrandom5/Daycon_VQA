@@ -84,25 +84,21 @@ class VLT5_Dataset(Dataset):
         )
         if not self.is_test:
             answer = "answer : " + row['answer']
-            answer = self.tokenizer.encode_plus(
-                answer,
-                truncation=True,
-                add_special_tokens=True,
-                max_length=32,
-                padding="max_length",
-                return_attention_mask=True,
-                return_tensors="pt"
-            )
-            return {
-                'image': img_feat,
-                'pos': bbox,
-                'question': question,
-                'answer': answer
-            }
         else:
-            return {
-                'image': img_feat,
-                'pos': bbox,
-                'question': question
-            }
+            answer = "answer : "
+        answer = self.tokenizer.encode_plus(
+            answer,
+            truncation=True,
+            add_special_tokens=True,
+            max_length=32,
+            padding="max_length",
+            return_attention_mask=True,
+            return_tensors="pt"
+        )
+        return {
+            'image': img_feat,
+            'pos': bbox,
+            'question': question,
+            'answer': answer
+        }
         
