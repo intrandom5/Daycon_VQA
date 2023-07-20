@@ -65,3 +65,61 @@ class VQADataset(Dataset):
                 'attention_mask': question['attention_mask'].squeeze(),
             }
         
+        
+class VLT5_Dataset(Dataset):
+    def __init__(self, df, tokenizer, transforms, img_feat_path, bbox_path, is_test=False):
+        self.df = df
+        self.tokenizer = tokenizer
+        self.transforms = transforms
+        self.is_test = is_test
+
+        self.img_feats = []
+        self.bboxes = []
+
+        print("load FRCNN features...")
+        img_pkl_files = sorted(glob.glob(img_feat_path+"/*.pkl"))
+        for pkl in img_pkl_files:
+            with open(pkl, "rb") as f:
+                self.img_feats += pickle.load(f)
+        bbox_pkl_files = sorted(glob.glob(bbox_path+"/*.pkl"))
+        for pkl in bbox_pkl_files:
+            with open(pkl, "rb") as f:
+                self.bboxes += pickle.load(f)
+        print("Done!")
+
+    def __len__(self):
+        return len(self.df)
+    
+    def __getitem__(self, idx):
+        row = self.df.iloc[idx]
+        img_feat = self.img_feats[idx]
+        bbox = self.bboxes[idx]
+
+        question = self.tokenizer(
+            row['question'],
+            max_length=32,
+            padding="max_length",
+            truncation=True,
+            return_tensors="pt"
+        )
+        if not self.is_test:
+            answer = self.tokenizer(
+                row['answer'],
+                max_length=32,
+                padding="max_length",
+                truncation=True,
+                return_tensors="pt"
+            )
+            return {
+                'image': img_feat,
+                'pos': bbox,
+                'question': question,
+                'answer': answer
+            }
+        else:
+            return {
+                'image': img_feat,
+                'pos': bbox,
+                'question': question
+            }
+        
