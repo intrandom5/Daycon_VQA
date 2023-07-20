@@ -8,12 +8,11 @@ from torch.utils.data import DataLoader
 
 
 def load_pickles(files):
-    print("load FRCNN features...")
     results = []
     for file in files:
         with open(file, "rb") as f:
             results += pickle.load(f)
-    print("Done!")
+
     return results
 
 
