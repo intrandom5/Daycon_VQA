@@ -61,24 +61,13 @@ class VQADataset(Dataset):
         
         
 class VLT5_Dataset(Dataset):
-    def __init__(self, df, tokenizer, img_feat_path, bbox_path, is_test=False):
+    def __init__(self, df, tokenizer, img_feats, bboxes, is_test=False):
         self.df = df
         self.tokenizer = tokenizer
         self.is_test = is_test
 
-        self.img_feats = []
-        self.bboxes = []
-
-        print("load FRCNN features...")
-        img_pkl_files = sorted(glob.glob(img_feat_path+"/*.pkl"))
-        for pkl in img_pkl_files:
-            with open(pkl, "rb") as f:
-                self.img_feats += pickle.load(f)
-        bbox_pkl_files = sorted(glob.glob(bbox_path+"/*.pkl"))
-        for pkl in bbox_pkl_files:
-            with open(pkl, "rb") as f:
-                self.bboxes += pickle.load(f)
-        print("Done!")
+        self.img_feats = img_feats
+        self.bboxes = bboxes
 
     def __len__(self):
         return len(self.df)
