@@ -81,7 +81,9 @@ class VLT5(nn.Module):
             attention_mask=answer["attention_mask"],
             encoder_hidden_states=x,
             encoder_attention_mask=encoder_mask,
-        )
+        ).last_hidden_state
+
+        output = self.T5.lm_head(output)
         
-        return output.last_hidden_state
+        return output
     
