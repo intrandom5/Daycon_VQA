@@ -1,21 +1,11 @@
 from torch.utils.data import Dataset
-from PIL import Image
-import pickle
-import torch
-import glob
-import os
 
 
 class VQADataset(Dataset):
-    def __init__(self, df, tokenizer, transforms, img_path, is_test=False):
+    def __init__(self, df, tokenizer, img_feats, is_test=False):
         self.df = df
         self.tokenizer = tokenizer
-        self.transforms = transforms
-        self.img_path = img_path
-        if img_path.endswith("pkl"):
-            with open(img_path, "rb") as f:
-                self.reps = pickle.load(f)
-            
+        self.img_feats = img_feats
         self.is_test = is_test
 
     def __len__(self):
@@ -24,13 +14,8 @@ class VQADataset(Dataset):
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
 
-        if self.img_path.endswith("pkl"):
-            img_id = row["image_id"].split("_")[1]
-            image = self.reps[int(img_id)]
-        else:
-            img_name = os.path.join(self.img_path, row['image_id'] + '.jpg') # 이미지
-            image = Image.open(img_name).convert('RGB')
-            image = self.transforms(image)
+        img_id = row["image_id"].split("_")[1]
+        image = self.reps[int(img_id)]
 
         question = row['question'] # 질문
         question = self.tokenizer.encode_plus(
@@ -54,8 +39,9 @@ class VQADataset(Dataset):
             return {
                 'image': image,
                 'question': question['input_ids'].squeeze(),
-                'attention_mask': question['attention_mask'].squeeze(),
-                'answer': answer['input_ids'].squeeze()
+                'question_attention_mask': question['attention_mask'].squeeze(),
+                'answer': answer['input_ids'].squeeze(),
+                'answer_attention_mask': answer['attention_mask'].squeeze()
             }
         else:
             return {
@@ -63,4 +49,52 @@ class VQADataset(Dataset):
                 'question': question['input_ids'].squeeze(),
                 'attention_mask': question['attention_mask'].squeeze(),
             }
+        
+class VLT5_Dataset(Dataset):
+    def __init__(self, df, tokenizer, img_feats, bboxes, is_test=False):
+        self.df = df
+        self.tokenizer = tokenizer
+        self.img_feats = img_feats
+        self.bboxes = bboxes
+        self.is_test = is_test
+
+    def __len__(self):
+        return len(self.df)
+    
+    def __getitem__(self, idx):
+        row = self.df.iloc[idx]
+        img_id = row["image_id"].split("_")[1]
+        img_feat = self.img_feats[int(img_id)]
+        bbox = self.bboxes[int(img_id)]
+
+        question = "question : " + row['question']
+
+        question = self.tokenizer.encode_plus(
+            question,
+            truncation=True,
+            add_special_tokens=True,
+            max_length=32,
+            padding="max_length",
+            return_attention_mask=True,
+            return_tensors="pt"
+        )
+        if not self.is_test:
+            answer = "answer : " + row['answer']
+        else:
+            answer = "answer : "
+        answer = self.tokenizer.encode_plus(
+            answer,
+            truncation=True,
+            add_special_tokens=True,
+            max_length=32,
+            padding="max_length",
+            return_attention_mask=True,
+            return_tensors="pt"
+        )
+        return {
+            'image': img_feat.squeeze(),
+            'pos': bbox.squeeze(),
+            'question': {k: v.squeeze() for k, v in question.items()},
+            'answer': {k: v.squeeze() for k, v in answer.items()},
+        }
         
