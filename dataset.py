@@ -92,7 +92,7 @@ class VLT5_Dataset(Dataset):
         return {
             'image': img_feat.squeeze(),
             'pos': bbox.squeeze(),
-            'question': question,
-            'answer': answer,
+            'question': question.squeeze(),
+            'answer': answer.squeeze(),
         }
         
