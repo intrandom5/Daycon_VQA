@@ -67,34 +67,32 @@ class VLT5_Dataset(Dataset):
         img_feat = self.img_feats[int(img_id)]
         bbox = self.bboxes[int(img_id)]
 
-        question = "question : " + row['question']
+        question = "Q: " + row['question']
 
-        question = self.tokenizer.encode_plus(
+        question = self.tokenizer.encode(
             question,
             truncation=True,
             add_special_tokens=True,
             max_length=32,
             padding="max_length",
-            return_attention_mask=True,
             return_tensors="pt"
         )
         if not self.is_test:
-            answer = "answer : " + row['answer']
+            answer = "A: " + row['answer']
         else:
-            answer = "answer : "
-        answer = self.tokenizer.encode_plus(
+            answer = "A: "
+        answer = self.tokenizer.encode(
             answer,
             truncation=True,
             add_special_tokens=True,
             max_length=32,
             padding="max_length",
-            return_attention_mask=True,
             return_tensors="pt"
         )
         return {
             'image': img_feat.squeeze(),
             'pos': bbox.squeeze(),
-            'question': {k: v.squeeze() for k, v in question.items()},
-            'answer': {k: v.squeeze() for k, v in answer.items()},
+            'question': question,
+            'answer': answer,
         }
         
