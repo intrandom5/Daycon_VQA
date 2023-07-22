@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from model import BaseVQAModel, VLT5
+from model import BaseVQAModel, get_vlt5
 from transformers import GPT2Tokenizer, AutoTokenizer, T5Tokenizer
 from utils import load_pickles, prepare_data, train, inference, train_vlt5, inference_vlt5
 
@@ -78,8 +78,7 @@ def main(args):
         else:
             model = BaseVQAModel(vocab_size, True, args.model_type)
     else:
-        model = VLT5(N=36)
-        model.set_device('cuda')
+        model = get_vlt5("google/flan-t5-base")
         
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(), lr=args.learning_rate)
