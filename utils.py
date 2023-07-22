@@ -136,33 +136,16 @@ def train_vlt5(model, train_loader, valid_loader, optimizer, pad_token_id, devic
 
     return train_loss, valid_loss, model.state_dict()
 
-def inference_vlt5(model, loader, device, max_length=32):
+def inference_vlt5(model, loader, device):
     model.eval()
     preds = []
-    with torch.no_grad():
-        for data in tqdm(loader, total=len(loader)):
-            data['image'] = data['image'].to(device)
-            data['pos'] = data['pos'].to('cuda')
-            data['question'] = {k: v.to('cuda') for k, v in data['question'].items()}
-            data['answer'] = {k: v.to('cuda') for k, v in data['answer'].items()}
-            data['answer']['input_ids'] = model.T5._shift_right(data['answer']['input_ids'])
-
-            batch_size = data['image'].shape[0]
-
-            for _ in range(max_length):
-                with torch.no_grad():
-                    outputs = model(data['question'], data['answer'], data['image'], data['pos'])
-
-
-                next_token_id = torch.argmax(outputs, dim=-1)[:, -1]
-                next_token_id = next_token_id.view(-1, 1)
-                data['answer']['input_ids'] = torch.cat(
-                    [data['answer']['input_ids'], next_token_id], dim=-1
-                )
-                data['answer']['attention_mask'] = torch.cat(
-                    [data['answer']['attention_mask'], torch.ones(batch_size, 1).to('cuda')], dim=-1
-                )
-            
-            preds.extend(data['answer']['input_ids'].cpu().numpy())
+    for data in tqdm(loader):
+        data = {k: v.to(device) for k, v in data.items()}
+        output = model.generate(
+            data["question"],
+            vis_inputs=(data["image"], data["pos"])
+        )
+        preds.append(output)
+    preds = torch.cat(preds, dim=0)
 
     return preds
