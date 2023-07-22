@@ -83,25 +83,29 @@ def inference(model, loader, device):
 
     return preds
 
-def train_vlt5(model, train_loader, valid_loader, optimizer, criterion, device):
+def train_vlt5(model, train_loader, valid_loader, optimizer, pad_token_id, device):
     model.train()
     total_loss = 0
 
     for data in tqdm(train_loader, total=len(train_loader)):
-        data['image'] = data['image'].to('cuda')
-        data['pos'] = data['pos'].to('cuda')
-        data['question'] = {k: v.to('cuda') for k, v in data['question'].items()}
-        data['answer'] = {k: v.to('cuda') for k, v in data['answer'].items()}
-        label = data['answer']['input_ids']
-        data['answer']['input_ids'] = model.T5._shift_right(data['answer']['input_ids'])
+        data = {k: v.to(device) for k, v in data.items()}
 
         optimizer.zero_grad()
 
-        outputs = model(data['question'], data['answer'], data['image'], data['pos'])
-
-        # output: [batch, sequence, vocab], answer : [batch, sequence]
-        loss = criterion(outputs.view(-1, outputs.size(-1)), label.view(-1))
-        total_loss += loss.item()
+        output = model(
+            input_ids=data["question"],
+            vis_inputs=(data["image"], data["pos"]),
+            labels=data["answer"],
+            return_dict=True
+        )
+        lm_labels = data["answer"]
+        lm_mask = (lm_labels != pad_token_id).float()
+        B, L = lm_labels.size()
+        loss = output["loss"]
+        loss = loss.view(B, L)*lm_mask
+        loss = loss.sum(dim=1)/lm_mask.sum(dim=1).clamp(min=1)
+        loss = loss.mean()
+        total_loss += loss
 
         loss.backward()
         optimizer.step()
@@ -111,18 +115,22 @@ def train_vlt5(model, train_loader, valid_loader, optimizer, criterion, device):
     model.eval()
     total_loss = 0
     for data in tqdm(valid_loader, total=len(valid_loader)):
-        data['image'] = data['image'].to('cuda')
-        data['pos'] = data['pos'].to('cuda')
-        data['question'] = {k: v.to('cuda') for k, v in data['question'].items()}
-        data['answer'] = {k: v.to('cuda') for k, v in data['answer'].items()}
-        label = data['answer']['input_ids']
-        data['answer']['input_ids'] = model.T5._shift_right(data['answer']['input_ids'])
+        data = {k: v.to(device) for k, v in data.items()}
         with torch.no_grad():
-            outputs = model(data['question'], data['answer'], data['image'], data['pos'])
-
-        # output: [batch, sequence, vocab], answer : [batch, sequence]
-        loss = criterion(outputs.view(-1, outputs.size(-1)), label.view(-1))
-        total_loss += loss.item()
+            output = model(
+                input_ids=data["question"],
+                vis_inputs=(data["image"], data["pos"]),
+                labels=data["answer"],
+                return_dict=True
+            )
+        lm_labels = data["answer"]
+        lm_mask = (lm_labels != pad_token_id).float()
+        B, L = lm_labels.size()
+        loss = output["loss"]
+        loss = loss.view(B, L)*lm_mask
+        loss = loss.sum(dim=1)/lm_mask.sum(dim=1).clamp(min=1)
+        loss = loss.mean()
+        total_loss += loss
     
     valid_loss = total_loss / len(valid_loader)
 
