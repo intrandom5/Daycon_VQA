@@ -1,4 +1,5 @@
-import glob
+import os
+import wandb
 import torch
 import pickle
 import pandas as pd
@@ -83,58 +84,61 @@ def inference(model, loader, device):
 
     return preds
 
-def train_vlt5(model, train_loader, valid_loader, optimizer, pad_token_id, device):
-    model.train()
-    total_loss = 0
+def train_vlt5(
+        model, train_loader, valid_loader, optimizer, pad_token_id, device, epochs, model_path
+        ):
+    step = 0
+    for epoch in range(epochs):
+        model.train()
+        total_loss = 0
 
-    for data in tqdm(train_loader, total=len(train_loader)):
-        data = {k: v.to(device) for k, v in data.items()}
+        for data in tqdm(train_loader, total=len(train_loader)):
+            data = {k: v.to(device) for k, v in data.items()}
 
-        optimizer.zero_grad()
+            optimizer.zero_grad()
 
-        output = model(
-            input_ids=data["question"],
-            vis_inputs=(data["image"], data["pos"]),
-            labels=data["answer"],
-            return_dict=True
-        )
-        lm_labels = data["answer"]
-        lm_mask = (lm_labels != pad_token_id).float()
-        B, L = lm_labels.size()
-        loss = output["loss"]
-        loss = loss.view(B, L)*lm_mask
-        loss = loss.sum(dim=1)/lm_mask.sum(dim=1).clamp(min=1)
-        loss = loss.mean()
-        total_loss += loss
-
-        loss.backward()
-        optimizer.step()
-
-    train_loss = total_loss / len(train_loader)
-
-    model.eval()
-    total_loss = 0
-    for data in tqdm(valid_loader, total=len(valid_loader)):
-        data = {k: v.to(device) for k, v in data.items()}
-        with torch.no_grad():
             output = model(
                 input_ids=data["question"],
                 vis_inputs=(data["image"], data["pos"]),
                 labels=data["answer"],
                 return_dict=True
             )
-        lm_labels = data["answer"]
-        lm_mask = (lm_labels != pad_token_id).float()
-        B, L = lm_labels.size()
-        loss = output["loss"]
-        loss = loss.view(B, L)*lm_mask
-        loss = loss.sum(dim=1)/lm_mask.sum(dim=1).clamp(min=1)
-        loss = loss.mean()
-        total_loss += loss
-    
-    valid_loss = total_loss / len(valid_loader)
+            lm_labels = data["answer"]
+            lm_mask = (lm_labels != pad_token_id).float()
+            B, L = lm_labels.size()
+            loss = output["loss"]
+            loss = loss.view(B, L)*lm_mask
+            loss = loss.sum(dim=1)/lm_mask.sum(dim=1).clamp(min=1)
+            loss = loss.mean()
+            wandb.log({"Trainging step": step, "Train Loss": loss})
 
-    return train_loss, valid_loss, model.state_dict()
+            loss.backward()
+            optimizer.step()
+            step += 1
+
+        model.eval()
+        total_loss = 0
+        for data in tqdm(valid_loader, total=len(valid_loader)):
+            data = {k: v.to(device) for k, v in data.items()}
+            with torch.no_grad():
+                output = model(
+                    input_ids=data["question"],
+                    vis_inputs=(data["image"], data["pos"]),
+                    labels=data["answer"],
+                    return_dict=True
+                )
+            lm_labels = data["answer"]
+            lm_mask = (lm_labels != pad_token_id).float()
+            B, L = lm_labels.size()
+            loss = output["loss"]
+            loss = loss.view(B, L)*lm_mask
+            loss = loss.sum(dim=1)/lm_mask.sum(dim=1).clamp(min=1)
+            loss = loss.mean()
+            total_loss += loss
+        
+        valid_loss = total_loss / len(valid_loader)
+        wandb.log({"Valid Loss": valid_loss})
+    torch.save(model.state_dict(), os.path.join(model_path, f"epoch{epoch+1}.pt"))
 
 def inference_vlt5(model, loader, device):
     model.eval()

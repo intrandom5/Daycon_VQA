@@ -96,18 +96,25 @@ def main(args):
         )
 
     # Training Start!
-    for epoch in range(args.epochs):
-        if args.model_type == "vlt5":
-            train_loss, valid_loss, model_state = train_vlt5(
-                model, train_loader, valid_loader, optimizer, tokenizer.pad_token_id, device
-            )
-        else:
+    if args.model_type == "vlt5":
+        train_vlt5(
+            model, 
+            train_loader, 
+            valid_loader, 
+            optimizer, 
+            tokenizer.pad_token_id, 
+            device,
+            args.epochs,
+            args.model_path
+        )
+    else:
+        for epoch in range(args.epochs):
             train_loss, valid_loss, model_state = train(
                 model, train_loader, valid_loader, optimizer, criterion, device
             )
-        print(f"Epoch: {epoch+1}, Train Loss: {train_loss:.4f}, Valid Loss: {valid_loss:.4f}")
-        wandb.log({"epoch": epoch+1, "Train Loss": train_loss, "Valid Loss": valid_loss})
-        torch.save(model_state, os.path.join(args.model_path, f"epoch{epoch+1}.pt"))
+            print(f"Epoch: {epoch+1}, Train Loss: {train_loss:.4f}, Valid Loss: {valid_loss:.4f}")
+            wandb.log({"epoch": epoch+1, "Train Loss": train_loss, "Valid Loss": valid_loss})
+            torch.save(model_state, os.path.join(args.model_path, f"epoch{epoch+1}.pt"))
 
     print("load test FRCNN features...")
     img_feat_pkls = sorted(glob.glob(args.test_img_path+"/*.pkl"))
