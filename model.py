@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import torchvision.models as models
-from transformers import GPT2Model, BartModel, T5ForConditionalGeneration 
+from transformers import GPT2Model, BartModel, T5ForConditionalGeneration, T5Config
+from modeling_t5 import VLT5
 
 
 class BaseVQAModel(nn.Module):
@@ -42,48 +43,58 @@ class BaseVQAModel(nn.Module):
         return output
     
 
-class VLT5(nn.Module):
-    def __init__(self, N):
-        super(VLT5, self).__init__()
-        self.N = N
-        self.T5 = T5ForConditionalGeneration.from_pretrained("google/flan-t5-base")
-        self.feat_embedding = nn.Linear(2048, self.T5.config.hidden_size)
-        self.pos_embedding = nn.Linear(4, self.T5.config.hidden_size)
-        self.obj_embedding = nn.Linear(self.N, self.T5.config.hidden_size)
-        self.device = "cpu"
+# class VLT5(nn.Module):
+#     def __init__(self, N):
+#         super(VLT5, self).__init__()
+#         self.N = N
+#         self.T5 = T5ForConditionalGeneration.from_pretrained("google/flan-t5-base")
+#         self.feat_embedding = nn.Linear(2048, self.T5.config.hidden_size)
+#         self.pos_embedding = nn.Linear(4, self.T5.config.hidden_size)
+#         self.obj_embedding = nn.Linear(self.N, self.T5.config.hidden_size)
+#         self.device = "cpu"
     
-    def set_device(self, device):
-        self.to(device)
-        self.device = device
+#     def set_device(self, device):
+#         self.to(device)
+#         self.device = device
         
-    def forward(self, question, answer, vis_feats, pos, obj=None, vis_mask=None):
-        text_emb = self.T5.encoder.embed_tokens(question["input_ids"]) # [B, n, n_dim]
+#     def forward(self, question, answer, vis_feats, pos, obj=None, vis_mask=None):
+#         text_emb = self.T5.encoder.embed_tokens(question["input_ids"]) # [B, n, n_dim]
         
-        vis_emb = self.feat_embedding(vis_feats) # [B, N, n_dim]
-        pos_emb = self.pos_embedding(pos) # [B, N, n_dim]
-        if obj == None:
-            obj = torch.arange(self.N, device=self.device)
-            obj = obj.unsqueeze(0)
-        obj_emb = self.obj_embedding(obj.float())
-        img_emb = vis_emb + pos_emb + obj_emb
+#         vis_emb = self.feat_embedding(vis_feats) # [B, N, n_dim]
+#         pos_emb = self.pos_embedding(pos) # [B, N, n_dim]
+#         if obj == None:
+#             obj = torch.arange(self.N, device=self.device)
+#             obj = obj.unsqueeze(0)
+#         obj_emb = self.obj_embedding(obj.float())
+#         img_emb = vis_emb + pos_emb + obj_emb
         
-        x = torch.cat([text_emb, img_emb], dim=1) # [B, n+M, n_dim]
-        for block in self.T5.encoder.block:
-            x, _ = block(x)
+#         x = torch.cat([text_emb, img_emb], dim=1) # [B, n+M, n_dim]
+#         for block in self.T5.encoder.block:
+#             x, _ = block(x)
             
-        if vis_mask == None:
-            vis_mask = torch.ones(size=(vis_feats.shape[0], self.N), device=self.device)
-        encoder_mask = torch.cat([question["attention_mask"], vis_mask], dim=1)
+#         if vis_mask == None:
+#             vis_mask = torch.ones(size=(vis_feats.shape[0], self.N), device=self.device)
+#         encoder_mask = torch.cat([question["attention_mask"], vis_mask], dim=1)
         
-        # decoding
-        output = self.T5.decoder(
-            input_ids=answer["input_ids"],
-            attention_mask=answer["attention_mask"],
-            encoder_hidden_states=x,
-            encoder_attention_mask=encoder_mask,
-        ).last_hidden_state
+#         # decoding
+#         output = self.T5.decoder(
+#             input_ids=answer["input_ids"],
+#             attention_mask=answer["attention_mask"],
+#             encoder_hidden_states=x,
+#             encoder_attention_mask=encoder_mask,
+#         ).last_hidden_state
 
-        output = self.T5.lm_head(output)
+#         output = self.T5.lm_head(output)
         
-        return output
+#         return output
     
+def get_vlt5(model_name):
+    t5_config = T5Config.from_pretrained("google/flan-t5-base")
+    t5_config.feat_dim = 2048
+    t5_config.pos_dim = 4
+    t5_config.n_images = 36
+    t5_config.individual_vis_layer_norm = True
+    t5_config.use_vis_layer_norm = True
+    t5_config.use_vis_order_embedding = True
+    t5_config.tie_word_embeddings=True
+    return VLT5.from_pretrained(model_name, config=t5_config)
