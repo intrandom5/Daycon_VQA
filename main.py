@@ -99,7 +99,7 @@ def main(args):
     for epoch in range(args.epochs):
         if args.model_type == "vlt5":
             train_loss, valid_loss, model_state = train_vlt5(
-                model, train_loader, valid_loader, optimizer, criterion, device
+                model, train_loader, valid_loader, optimizer, tokenizer.pad_token_id, device
             )
         else:
             train_loss, valid_loss, model_state = train(
@@ -135,11 +135,7 @@ def main(args):
         )
         preds = inference(model, test_loader, device)
 
-    no_pad_output = []
-    for pred in preds:
-        no_pad_output.append(
-            tokenizer.decode(pred, skip_special_tokens=True).strip().replace("answer :", "")
-        )
+    no_pad_output = tokenizer.batch_decode(preds, skip_special_tokens=True)
 
     sample_submission = pd.read_csv('../sample_submission.csv')
     sample_submission["answer"] = no_pad_output
