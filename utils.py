@@ -138,7 +138,7 @@ def train_vlt5(
         
         valid_loss = total_loss / len(valid_loader)
         wandb.log({"Valid Loss": valid_loss})
-    torch.save(model.state_dict(), os.path.join(model_path, f"epoch{epoch+1}.pt"))
+        torch.save(model.state_dict(), os.path.join(model_path, f"epoch{epoch+1}.pt"))
 
 def inference_vlt5(model, loader, device):
     model.eval()
