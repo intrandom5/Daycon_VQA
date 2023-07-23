@@ -150,6 +150,5 @@ def inference_vlt5(model, loader, device):
             vis_inputs=(data["image"], data["pos"])
         )
         preds.append(output)
-    preds = torch.cat(preds, dim=0)
 
     return preds
