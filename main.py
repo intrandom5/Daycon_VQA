@@ -1,5 +1,4 @@
 import os
-import yaml
 import glob
 import wandb
 import argparse
@@ -9,9 +8,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from model import BaseVQAModel, get_vlt5
-from transformers import GPT2Tokenizer, AutoTokenizer, T5Tokenizer
-from utils import load_pickles, prepare_data, train, inference, train_vlt5, inference_vlt5
+from model import get_vlt5
+from transformers import T5Tokenizer
+from utils import load_pickles, prepare_data, train_vlt5, inference_vlt5
 
 
 def main(args):
