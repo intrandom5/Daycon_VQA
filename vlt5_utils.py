@@ -1,11 +1,17 @@
 import os
+import glob
 import wandb
 import torch
 import pickle
 import pandas as pd
 from tqdm.auto import tqdm
-from dataset import VQADataset, VLT5_Dataset
+
+import torch.optim as optim
 from torch.utils.data import DataLoader
+from transformers import T5Tokenizer
+
+from dataset import VLT5_Dataset, Git_Dataset
+from model import get_vlt5
 
 
 def load_pickles(files):
@@ -16,73 +22,13 @@ def load_pickles(files):
 
     return results
 
-
-def prepare_data(df_path, tokenizer, test_mode, shuffle, img_feats, bboxes=None):
+def prepare_vlt5_data(df_path, tokenizer, test_mode, shuffle, img_feats, bboxes=None):
     df = pd.read_csv(df_path)
 
-    if bboxes is None:
-        dataset = VQADataset(df, tokenizer, img_feats, is_test=test_mode)
-    else:
-        dataset = VLT5_Dataset(df, tokenizer, img_feats, bboxes, test_mode)
+    dataset = VLT5_Dataset(df, tokenizer, img_feats, bboxes, test_mode)
     loader = DataLoader(dataset, batch_size=32, shuffle=shuffle)
 
     return loader
-
-def train(model, train_loader, valid_loader, optimizer, criterion, device):
-    model.train()
-    total_loss = 0
-
-    for data in tqdm(train_loader, total=len(train_loader)):
-        images = data['image'].to(device)
-        question = data['question'].to(device)
-        answer = data['answer'].to(device)
-        attention_mask = data['attention_mask'].to(device)
-
-        optimizer.zero_grad()
-
-        outputs = model(images, question, answer, attention_mask)
-
-        # output: [batch, sequence, vocab], answer : [batch, sequence]
-        loss = criterion(outputs.view(-1, outputs.size(-1)), answer.view(-1))
-        total_loss += loss.item()
-
-        loss.backward()
-        optimizer.step()
-
-    train_loss = total_loss / len(train_loader)
-
-    model.eval()
-    total_loss = 0
-    for data in tqdm(valid_loader, total=len(valid_loader)):
-        images = data['image'].to(device)
-        question = data['question'].to(device)
-        answer = data['answer'].to(device)
-        attention_mask = data['attention_mask'].to(device)
-
-        with torch.no_grad():
-            outputs = model(images, question, attention_mask)
-        loss = criterion(outputs.view(-1, outputs.size(-1)), answer.view(-1))
-        total_loss += loss.item()
-    
-    valid_loss = total_loss / len(valid_loader)
-
-    return train_loss, valid_loss, model.state_dict()
-
-def inference(model, loader, device):
-    model.eval()
-    preds = []
-    with torch.no_grad():
-        for data in tqdm(loader, total=len(loader)):
-            images = data['image'].to(device)
-            attention_mask = data['attention_mask'].to(device)
-            question = data['question'].to(device)
-
-            outputs = model(images, question, attention_mask)
-
-            _, pred = torch.max(outputs, dim=2) # values, indices = _, pred
-            preds.extend(pred.cpu().numpy())
-
-    return preds
 
 def train_vlt5(
         model, train_loader, valid_loader, optimizer, pad_token_id, device, epochs, model_path
@@ -152,3 +98,48 @@ def inference_vlt5(model, loader, device):
         preds.append(output)
 
     return preds
+
+def vlt5_process(args):
+    tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-base")
+
+    # open pickle files
+    print("load FRCNN features...")
+    img_feat_pkls = sorted(glob.glob(args.train_img_path+"/*.pkl"))
+    train_img_feats = load_pickles(img_feat_pkls)
+
+    bboxes = sorted(glob.glob(args.train_bbox_path+"/*.pkl"))
+    train_bboxes = load_pickles(bboxes)
+    print("Done!")
+    train_df = pd.read_csv(args.train_df)
+    valid_df = pd.read_csv(args.valid_df)
+    train_dataset = VLT5_Dataset(train_df, tokenizer, train_img_feats, train_bboxes)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    valid_dataset = VLT5_Dataset(valid_df, tokenizer, train_img_feats, train_bboxes)
+    valid_loader = DataLoader(valid_dataset, batch_size=32, shuffle=False)
+
+    model = get_vlt5("google/flan-t5-base")
+
+    optimizer = optim.AdamW(model.parameters(), lr=args.learning_rate)
+
+    if not os.path.exists(args.model_path):
+        os.mkdir(args.model_path)
+
+    model.to(args.device)
+    if args.logger == "wandb":
+        run = wandb.init(
+            project="DayCon_VQA", 
+            entity="intrandom5", 
+            name=args.log_name, 
+            notes=args.log_note
+        )
+
+    train_vlt5(
+        model, 
+        train_loader, 
+        valid_loader, 
+        optimizer, 
+        tokenizer.pad_token_id, 
+        args.device,
+        args.epochs,
+        args.model_path
+    )
