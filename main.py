@@ -1,6 +1,7 @@
 import torch
 import argparse
 from vlt5_utils import vlt5_process
+from git_utils import git_process
 
 
 def main(args):
@@ -11,6 +12,8 @@ def main(args):
 
     if args.model_type == "vlt5":
         vlt5_process(args)
+    elif args.model_type == "git":
+        git_process(args)
 
     # print("load test FRCNN features...")
     # img_feat_pkls = sorted(glob.glob(args.test_img_path+"/*.pkl"))
@@ -45,9 +48,11 @@ if __name__=="__main__":
     parser.add_argument("--test_img_path", type=str, help="path of test image features in '.pkl' format or folder contains image.")
     parser.add_argument("--train_bbox_path", type=str, default="none", help="path of train bbox features.")
     parser.add_argument("--test_bbox_path", type=str, default="none", help="path of test bbox features.")
+    parser.add_argument("--caption", type=bool, help="weather use caption for training.")
     parser.add_argument("--model_path", type=str, help="path of model to save.")
     parser.add_argument("--model_type", type=str, help="type of pretrained language model to use. ['vlt5']")
     parser.add_argument("--epochs", type=int, help="epochs of training.")
+    parser.add_argument("--eval_step", type=int, help="step to evaluate model.")
     parser.add_argument("--learning_rate", type=float, help="learning rate")
     parser.add_argument("--submission_name", type=str, help="name of submission file.")
     parser.add_argument("--logger", type=str, help="select logger. ['wandb', 'none']")
