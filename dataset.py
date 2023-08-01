@@ -51,9 +51,9 @@ class VLT5_Dataset(Dataset):
         }
         
 class Git_Dataset(Dataset):
-    def __init__(self, df_path, processor, is_test=True, caption=False):
+    def __init__(self, df, processor, is_test=True, caption=False):
         super(Git_Dataset, self).__init__()
-        self.df = pd.read_csv(df_path)
+        self.df = df
         self.processor = processor
         self.is_test = is_test
         self.caption = caption
