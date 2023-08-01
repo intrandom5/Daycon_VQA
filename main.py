@@ -17,15 +17,9 @@ from utils import load_pickles, prepare_data, train, inference, train_vlt5, infe
 def main(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    assert args.model_type in ["gpt2", "bart", "vlt5"]
+    assert args.model_type in ["vlt5"]
 
-    if args.model_type == "gpt2":
-        tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-        tokenizer.add_special_tokens({"pad_token": "[PAD]"})
-    elif args.model_type == "bart":
-        tokenizer = AutoTokenizer.from_pretrained("facebook/bart-base")
-    elif args.model_type == "vlt5":
-        tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-base")
+    tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-base")
     vocab_size = len(tokenizer)
 
     # open pickle files
@@ -55,29 +49,10 @@ def main(args):
             img_feats=train_img_feats,
             bboxes=train_bboxes
         )
-    else:
-        train_loader = prepare_data(
-            args.train_df,
-            tokenizer,
-            test_mode=False,
-            shuffle=True,
-            img_path=args.train_img_path
-        )
-        valid_loader = prepare_data(
-            args.valid_df,
-            tokenizer,
-            test_mode=False,
-            shuffle=False,
-            img_feats=train_img_feats
-        )
+
 
     # Define Model
-    if args.model_type == "gpt2":
-        if args.train_img_path.endswith("pkl"):
-            model = BaseVQAModel(vocab_size, False, args.model_type)
-        else:
-            model = BaseVQAModel(vocab_size, True, args.model_type)
-    else:
+    if args.model_type == "vlt5":
         model = get_vlt5("google/flan-t5-base")
         
     criterion = nn.CrossEntropyLoss()
@@ -107,19 +82,11 @@ def main(args):
             args.epochs,
             args.model_path
         )
-    else:
-        for epoch in range(args.epochs):
-            train_loss, valid_loss, model_state = train(
-                model, train_loader, valid_loader, optimizer, criterion, device
-            )
-            print(f"Epoch: {epoch+1}, Train Loss: {train_loss:.4f}, Valid Loss: {valid_loss:.4f}")
-            wandb.log({"epoch": epoch+1, "Train Loss": train_loss, "Valid Loss": valid_loss})
-            torch.save(model_state, os.path.join(args.model_path, f"epoch{epoch+1}.pt"))
 
     print("load test FRCNN features...")
     img_feat_pkls = sorted(glob.glob(args.test_img_path+"/*.pkl"))
     test_img_feats = load_pickles(img_feat_pkls)
-    if args.test_bbox_path != None:
+    if args.model_type == "vlt5":
         bboxes = sorted(glob.glob(args.test_bbox_path+"/*.pkl"))
         test_bboxes = load_pickles(bboxes)
         test_loader = prepare_data(
@@ -132,15 +99,7 @@ def main(args):
         )
         print("Done!")
         preds = inference_vlt5(model, test_loader, device)
-    else:
-        test_loader = prepare_data(
-            args.test_df, 
-            tokenizer=tokenizer,
-            test_mode=True,
-            shuffle=False,
-            img_feats=test_img_feats
-        )
-        preds = inference(model, test_loader, device)
+
 
     no_pad_output = tokenizer.batch_decode(preds, skip_special_tokens=True)
 
@@ -158,7 +117,7 @@ if __name__=="__main__":
     parser.add_argument("--train_bbox_path", type=str, default="none", help="path of train bbox features.")
     parser.add_argument("--test_bbox_path", type=str, default="none", help="path of test bbox features.")
     parser.add_argument("--model_path", type=str, help="path of model to save.")
-    parser.add_argument("--model_type", type=str, help="type of pretrained language model to use. ['gpt2', 'bart', 'vlt5']")
+    parser.add_argument("--model_type", type=str, help="type of pretrained language model to use. ['vlt5']")
     parser.add_argument("--epochs", type=int, help="epochs of training.")
     parser.add_argument("--learning_rate", type=float, help="learning rate")
     parser.add_argument("--submission_name", type=str, help="name of submission file.")
