@@ -1,54 +1,8 @@
 from torch.utils.data import Dataset
+from PIL import Image
+import pandas as pd
+import os
 
-
-class VQADataset(Dataset):
-    def __init__(self, df, tokenizer, img_feats, is_test=False):
-        self.df = df
-        self.tokenizer = tokenizer
-        self.img_feats = img_feats
-        self.is_test = is_test
-
-    def __len__(self):
-        return len(self.df)
-
-    def __getitem__(self, idx):
-        row = self.df.iloc[idx]
-
-        img_id = row["image_id"].split("_")[1]
-        image = self.reps[int(img_id)]
-
-        question = row['question'] # 질문
-        question = self.tokenizer.encode_plus(
-            question,
-            truncation=True,
-            add_special_tokens=True,
-            max_length=32,
-            padding='max_length',
-            return_attention_mask=True,
-            return_tensors='pt',
-        )
-
-        if not self.is_test:
-            answer = row['answer'] # 답변
-            answer = self.tokenizer.encode_plus(
-                answer,
-                max_length=32,
-                padding='max_length',
-                truncation=True,
-                return_tensors='pt')
-            return {
-                'image': image,
-                'question': question['input_ids'].squeeze(),
-                'question_attention_mask': question['attention_mask'].squeeze(),
-                'answer': answer['input_ids'].squeeze(),
-                'answer_attention_mask': answer['attention_mask'].squeeze()
-            }
-        else:
-            return {
-                'image': image,
-                'question': question['input_ids'].squeeze(),
-                'attention_mask': question['attention_mask'].squeeze(),
-            }
         
 class VLT5_Dataset(Dataset):
     def __init__(self, df, tokenizer, img_feats, bboxes, is_test=False):
@@ -96,3 +50,49 @@ class VLT5_Dataset(Dataset):
             'answer': answer.squeeze(),
         }
         
+class Git_Dataset(Dataset):
+    def __init__(self, df_path, processor, is_test=True, caption=False):
+        super(Git_Dataset, self).__init__()
+        self.df = pd.read_csv(df_path)
+        self.processor = processor
+        self.is_test = is_test
+        self.caption = caption
+        
+    def __len__(self):
+        return len(self.df)
+        
+    def __getitem__(self, idx):
+        row = self.df.iloc[idx]
+        if self.is_test:
+            img_path = os.path.join("../image/test", row["image_id"] + ".jpg") # train_000000
+        else:
+            img_path = os.path.join("../image/train", row["image_id"] + ".jpg") # train_000000
+        img = Image.open(img_path).convert("RGB")
+        return_dict = self.processor(images=img, return_tensors="pt")
+        return_dict["pixel_values"] = return_dict["pixel_values"].squeeze()
+        
+        question = "question : " + row['question']
+        if self.caption:
+            question = f"info : {row['caption']}, {row['ocr']}. {question}"
+            question = question.replace(", nan", "")
+                
+        if not self.is_test:
+            answer = "answer : " + row['answer']
+            question = question + " " + answer
+
+        question = self.processor.tokenizer(
+            question,
+            truncation=True,
+            add_special_tokens=True,
+            max_length=40,
+            padding="max_length",
+            return_tensors="pt"
+        )
+            
+        return_dict["input_ids"] = question['input_ids'].squeeze()
+        return_dict["attention_mask"] = question["attention_mask"].squeeze()
+        
+        if not self.is_test:
+            return_dict["labels"] = return_dict["input_ids"]
+
+        return return_dict
